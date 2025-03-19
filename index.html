@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Power Calc</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: left;
+            color: #ddd;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+
+        .checkbox-container input {
+            width: 18px;
+            height: 18px;
+            accent-color: #00d4ff;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #ddd;
+            cursor: pointer;
+        }
+
+        button {
+            margin-top: 15px;
+            background: #00d4ff;
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00a6d6;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            color: #fff;
+            display: none;
+            text-align: left;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Anime Power Calc</h2>
+
+        <label for="money">Seu Dinheiro Atual:</label>
+        <input type="text" id="money" placeholder="Ex: 1.5K, 2M, 3B, 5T">
+
+        <label for="cost">Custo por Roletagem:</label>
+        <input type="text" id="cost" placeholder="Ex: 500, 1K, 0.5M, 2B">
+
+        <label for="openCount">Quantos "Open" por vez:</label>
+        <input type="text" id="openCount" placeholder="Ex: 1K, 5M, 10B">
+
+        <label for="hours">Tempo para roletar:</label>
+        <input type="text" id="hours" placeholder="Ex: 1h, 1d, 1w, 1m">
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="fastOpen">
+            <label for="fastOpen">Ativar 2x Fast Open</label>
+        </div>
+
+        <button onclick="calcular()">Calcular</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function parseValor(valor) {
+            valor = valor.toUpperCase().replace(/,/g, '').trim();
+            let multiplicadores = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12, "QD": 1e15, "QN": 1e18};
+            for (let [letra, fator] of Object.entries(multiplicadores)) {
+                if (valor.includes(letra)) return parseFloat(valor.replace(letra, '')) * fator;
+            }
+            return isNaN(valor) ? NaN : parseFloat(valor);
+        }
+
+        function parseTempo(valor) {
+            let unidades = {"h": 1, "d": 24, "w": 168, "m": 720};
+            for (let [letra, fator] of Object.entries(unidades)) {
+                if (valor.includes(letra)) return parseFloat(valor.replace(letra, '')) * fator;
+            }
+            return isNaN(valor) ? NaN : parseFloat(valor);
+        }
+
+        function formatarValor(numero) {
+            let suffixes = ["", "K", "M", "B", "T", "QD", "QN"];
+            let tier = Math.floor(Math.log10(numero) / 3);
+            return tier > 0 ? (numero / Math.pow(10, tier * 3)).toFixed(2) + suffixes[tier] : numero.toString();
+        }
+
+        function calcular() {
+            let money = parseValor(document.getElementById("money").value);
+            let cost = parseValor(document.getElementById("cost").value);
+            let openCount = parseValor(document.getElementById("openCount").value);
+            let hours = parseTempo(document.getElementById("hours").value);
+            let fastOpen = document.getElementById("fastOpen").checked ? 2 : 1;
+
+            let rollsPerMinute = 12 * fastOpen * openCount;
+            let moneyPerMinute = rollsPerMinute * cost;
+            let rollsPerHour = rollsPerMinute * 60;
+            let moneyPerHour = moneyPerMinute * 60;
+            let totalRollsPossible = Math.floor(money / cost);
+            let moneyNeeded = moneyPerHour * hours;
+
+            let resultText = `
+                <p>Total de giros possíveis: <b class="highlight">${formatarValor(totalRollsPossible)}</b></p>
+                <p>Giros por minuto: <b class="highlight">${formatarValor(rollsPerMinute)}</b></p>
+                <p>Money gasto por minuto: <b class="highlight">${formatarValor(moneyPerMinute)}</b></p>
+                <p>Giros por hora: <b class="highlight">${formatarValor(rollsPerHour)}</b></p>
+                <p>Money gasto por hora: <b class="highlight">${formatarValor(moneyPerHour)}</b></p>
+                <p>Money necessário para ${hours} horas: <b class="highlight">${formatarValor(moneyNeeded)}</b></p>
+            `;
+
+            document.getElementById("result").innerHTML = resultText;
+            document.getElementById("result").style.display = "block";
+        }
+    </script>
+</body>
+</html>
